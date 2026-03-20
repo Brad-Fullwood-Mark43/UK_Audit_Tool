@@ -9,8 +9,8 @@ class AuditService {
       SELECT *
       FROM vw_user_activity_timeline
       WHERE user_id = ?
-        AND (? IS NULL OR timestamp >= ?)
-        AND (? IS NULL OR timestamp <= ?)
+        AND (CAST(? AS TIMESTAMP) IS NULL OR timestamp >= CAST(? AS TIMESTAMP))
+        AND (CAST(? AS TIMESTAMP) IS NULL OR timestamp <= CAST(? AS TIMESTAMP))
       ORDER BY timestamp DESC
       LIMIT ? OFFSET ?
     `;
@@ -53,8 +53,8 @@ class AuditService {
         MAX(timestamp) as last_activity
       FROM vw_user_activity_timeline
       WHERE user_id = ?
-        AND (? IS NULL OR timestamp >= ?)
-        AND (? IS NULL OR timestamp <= ?)
+        AND (CAST(? AS TIMESTAMP) IS NULL OR timestamp >= CAST(? AS TIMESTAMP))
+        AND (CAST(? AS TIMESTAMP) IS NULL OR timestamp <= CAST(? AS TIMESTAMP))
     `;
 
     const statsResult = await db.query(statsQuery, [userId, startDate, startDate, endDate, endDate]);
@@ -148,12 +148,12 @@ class AuditService {
       LEFT JOIN usage_logs ul ON u.user_id = ul.user_id
         AND ul.primary_entity_type = 'REPORT'
         AND ul.primary_entity_id > 0
-        AND (? IS NULL OR ul.usage_log_date_utc >= ?)
-        AND (? IS NULL OR ul.usage_log_date_utc <= ?)
+        AND (CAST(? AS TIMESTAMP) IS NULL OR ul.usage_log_date_utc >= CAST(? AS TIMESTAMP))
+        AND (CAST(? AS TIMESTAMP) IS NULL OR ul.usage_log_date_utc <= CAST(? AS TIMESTAMP))
       LEFT JOIN report_history_events rhe ON u.user_id = rhe.changed_by
         AND rhe.primary_type = 'REPORT'
-        AND (? IS NULL OR rhe.timestamp_utc >= ?)
-        AND (? IS NULL OR rhe.timestamp_utc <= ?)
+        AND (CAST(? AS TIMESTAMP) IS NULL OR rhe.timestamp_utc >= CAST(? AS TIMESTAMP))
+        AND (CAST(? AS TIMESTAMP) IS NULL OR rhe.timestamp_utc <= CAST(? AS TIMESTAMP))
       WHERE u.user_id = ?
         AND (ul.primary_entity_id IS NOT NULL OR rhe.primary_id IS NOT NULL)
       GROUP BY report_id, report_title
@@ -210,7 +210,7 @@ class AuditService {
           SELECT timestamp_utc FROM report_history_events WHERE primary_id = dr.report_id AND primary_type = 'REPORT'
         )) as last_activity
       FROM distinct_reports dr
-      WHERE (? IS NULL OR (SELECT report_type FROM report_metadata WHERE report_id = dr.report_id) = ?)
+      WHERE (CAST(? AS VARCHAR) IS NULL OR (SELECT report_type FROM report_metadata WHERE report_id = dr.report_id) = CAST(? AS VARCHAR))
       ORDER BY last_activity DESC
     `;
 
@@ -258,8 +258,8 @@ class AuditService {
         SUM(CASE WHEN activity_type = 'LOGGED_IN' THEN 1 ELSE 0 END) as login_count,
         COUNT(DISTINCT ip_address) as unique_ips
       FROM vw_user_activity_timeline
-      WHERE (? IS NULL OR timestamp >= ?)
-        AND (? IS NULL OR timestamp <= ?)
+      WHERE (CAST(? AS TIMESTAMP) IS NULL OR timestamp >= CAST(? AS TIMESTAMP))
+        AND (CAST(? AS TIMESTAMP) IS NULL OR timestamp <= CAST(? AS TIMESTAMP))
     `;
 
     const result = await db.query(query, [startDate, startDate, endDate, endDate]);
