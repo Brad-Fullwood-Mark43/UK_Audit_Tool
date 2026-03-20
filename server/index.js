@@ -117,6 +117,21 @@ app.get('/api/migrate-database', async (req, res) => {
 
     const client = await pool.connect();
 
+    // Step 0: Clean slate (drop existing tables)
+    console.log('🧹 Cleaning existing tables...');
+    await client.query(`
+      DROP TABLE IF EXISTS history_change_sets CASCADE;
+      DROP TABLE IF EXISTS report_history_events CASCADE;
+      DROP TABLE IF EXISTS usage_logs CASCADE;
+      DROP TABLE IF EXISTS report_metadata CASCADE;
+      DROP TABLE IF EXISTS users CASCADE;
+      DROP VIEW IF EXISTS vw_user_activity_timeline CASCADE;
+      DROP VIEW IF EXISTS vw_report_audit_trail CASCADE;
+      DROP VIEW IF EXISTS vw_suspicious_activity CASCADE;
+      DROP FUNCTION IF EXISTS get_user_activity CASCADE;
+      DROP FUNCTION IF EXISTS get_report_audit_trail CASCADE;
+    `);
+
     // Step 1: Schema
     console.log('📋 Creating schema...');
     const schemaPath = path.join(__dirname, '../schema.sql');
