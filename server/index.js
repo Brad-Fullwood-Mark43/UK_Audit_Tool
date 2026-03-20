@@ -83,17 +83,28 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Debug endpoint to check environment
+app.get('/api/check-env', (req, res) => {
+  res.json({
+    hasDatabaseUrl: !!process.env.DATABASE_URL,
+    nodeEnv: process.env.NODE_ENV,
+    port: process.env.PORT,
+    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    databaseType: process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'
+  });
+});
+
 // Database migration endpoint (for Railway one-time setup)
 app.get('/api/migrate-database', async (req, res) => {
-  // Only allow in production with DATABASE_URL
-  if (!process.env.DATABASE_URL) {
-    return res.status(403).json({
-      success: false,
-      error: 'Migration only available in production with DATABASE_URL'
-    });
-  }
-
   try {
+    // Check if DATABASE_URL exists
+    if (!process.env.DATABASE_URL) {
+      return res.status(400).json({
+        success: false,
+        error: 'DATABASE_URL not set. Please add PostgreSQL database to Railway project.',
+        hasDatabase: false
+      });
+    }
     console.log('🚀 Starting database migration...');
 
     const { Pool } = require('pg');
