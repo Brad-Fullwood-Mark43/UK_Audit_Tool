@@ -7,7 +7,8 @@
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
     "db:init": "node scripts/initDatabase.js",
-    "db:seed": "node scripts/seedSampleData.js"
+    "db:seed": "node scripts/seedSampleData.js",
+    "db:migrate": "node scripts/migrateToPostgres.js"
   },
   "keywords": [
     "audit",

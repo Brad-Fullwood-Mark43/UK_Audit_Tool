@@ -32,6 +32,3 @@ coverage/
 # Temporary files
 *.tmp
 temp/
-
-# Data exports
-data/sample-data.sql
