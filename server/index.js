@@ -83,6 +83,73 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Database migration endpoint (for Railway one-time setup)
+app.get('/api/migrate-database', async (req, res) => {
+  // Only allow in production with DATABASE_URL
+  if (!process.env.DATABASE_URL) {
+    return res.status(403).json({
+      success: false,
+      error: 'Migration only available in production with DATABASE_URL'
+    });
+  }
+
+  try {
+    console.log('🚀 Starting database migration...');
+
+    const { Pool } = require('pg');
+    const fs = require('fs');
+
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+
+    const client = await pool.connect();
+
+    // Step 1: Schema
+    console.log('📋 Creating schema...');
+    const schemaPath = path.join(__dirname, '../schema.sql');
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    await client.query(schemaSql);
+
+    // Step 2: Data
+    console.log('📦 Importing data...');
+    const dataPath = path.join(__dirname, '../data/sample-data.sql');
+    const dataSql = fs.readFileSync(dataPath, 'utf8');
+    await client.query(dataSql);
+
+    // Step 3: Verify
+    console.log('🔍 Verifying...');
+    const counts = {};
+    const tables = ['users', 'report_metadata', 'usage_logs', 'report_history_events', 'history_change_sets'];
+
+    for (const table of tables) {
+      const result = await client.query(`SELECT COUNT(*) FROM ${table}`);
+      counts[table] = parseInt(result.rows[0].count);
+    }
+
+    client.release();
+    await pool.end();
+
+    console.log('✅ Migration completed!');
+
+    res.json({
+      success: true,
+      message: 'Database migration completed successfully',
+      counts,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
 // API routes
 app.use('/api', auditRoutes);
 
