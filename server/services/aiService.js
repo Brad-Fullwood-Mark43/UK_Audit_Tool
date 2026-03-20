@@ -73,54 +73,46 @@ Be concise, professional, and focus on factual information from the data. If you
       // Get all users with activity
       const users = await auditService.getAllUsers();
 
-      // Get all reports
+      // Get top 10 most active reports only (not all reports to avoid overwhelming the context)
       const reports = await auditService.getAllReports();
+      const topReports = reports.slice(0, 10);
 
-      // Get detailed activity for each user (reports they accessed/modified)
+      // Get detailed activity for top 5 users only
       const userActivities = await Promise.all(
-        users.slice(0, 10).map(async (u) => {
-          const userReports = await auditService.getUserReports(u.user_id, null, null);
-          return {
-            name: `${u.first_name} ${u.last_name}`,
-            badge: u.badge_number,
-            user_id: u.user_id,
-            usage_log_count: u.usage_log_count,
-            modification_count: u.modification_count,
-            reports_accessed: userReports.map(r => ({
-              report_id: r.report_id,
-              report_title: r.report_title,
-              view_count: r.view_count,
-              modification_count: r.modification_count,
-              last_viewed: r.last_viewed,
-              last_modified: r.last_modified
-            }))
-          };
+        users.slice(0, 5).map(async (u) => {
+          try {
+            const userReports = await auditService.getUserReports(u.user_id, null, null);
+            return {
+              name: `${u.first_name} ${u.last_name}`,
+              badge: u.badge_number,
+              user_id: u.user_id,
+              usage_log_count: u.usage_log_count,
+              modification_count: u.modification_count,
+              reports_accessed: userReports.slice(0, 5).map(r => ({
+                report_id: r.report_id,
+                report_title: r.report_title,
+                view_count: r.view_count,
+                modification_count: r.modification_count
+              }))
+            };
+          } catch (err) {
+            console.error(`Error fetching reports for user ${u.user_id}:`, err);
+            return {
+              name: `${u.first_name} ${u.last_name}`,
+              badge: u.badge_number,
+              user_id: u.user_id,
+              usage_log_count: u.usage_log_count,
+              modification_count: u.modification_count,
+              reports_accessed: []
+            };
+          }
         })
       );
-
-      // Get ALL detailed activity with change information for ALL reports
-      const allActivity = [];
-      for (const report of reports) {
-        const trail = await auditService.getReportAuditTrail(report.report_id);
-        allActivity.push({
-          report_id: report.report_id,
-          report_title: report.report_title,
-          report_type: report.report_type,
-          events: trail.map(e => ({
-            timestamp: e.timestamp,
-            action: e.action,
-            user_name: e.user_name,
-            badge_number: e.badge_number,
-            audit_type: e.audit_type,
-            change_details: e.change_details
-          }))
-        });
-      }
 
       return {
         summary,
         users: userActivities,
-        reports: reports.map(r => ({
+        reports: topReports.map(r => ({
           id: r.report_id,
           title: r.report_title,
           type: r.report_type,
@@ -128,11 +120,11 @@ Be concise, professional, and focus on factual information from the data. If you
           modification_count: r.modification_count,
           last_activity: r.last_activity
         })),
-        complete_audit_trail: allActivity
+        note: "Context limited to top 5 users and top 10 reports for performance. You can query specific users or reports for more details."
       };
     } catch (error) {
       console.error('Error gathering database context:', error);
-      return {};
+      throw error; // Re-throw to see the actual error in the API response
     }
   }
 }
