@@ -5,10 +5,7 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "nodemon server/index.js",
-    "client": "cd client && npm run dev",
-    "build": "cd client && npm run build",
+    "dev": "nodemon server/index.js",
     "db:init": "node scripts/initDatabase.js",
     "db:seed": "node scripts/seedSampleData.js"
   },
