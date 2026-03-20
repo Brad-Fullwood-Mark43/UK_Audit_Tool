@@ -39,7 +39,7 @@ CREATE INDEX idx_report_metadata_type ON report_metadata(report_type);
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS usage_logs (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(user_id),
     department_id BIGINT,
     agency_id BIGINT,
