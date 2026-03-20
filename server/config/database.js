@@ -36,8 +36,18 @@ if (USE_SQLITE) {
     process.exit(-1);
   });
 
+  // Convert SQLite-style ? placeholders to PostgreSQL $1, $2, $3 format
+  const convertQuery = (sqliteQuery, params = []) => {
+    let index = 0;
+    const pgQuery = sqliteQuery.replace(/\?/g, () => `$${++index}`);
+    return { text: pgQuery, params };
+  };
+
   module.exports = {
-    query: (text, params) => pool.query(text, params),
+    query: (text, params = []) => {
+      const { text: pgQuery, params: pgParams } = convertQuery(text, params);
+      return pool.query(pgQuery, pgParams);
+    },
     pool
   };
 }

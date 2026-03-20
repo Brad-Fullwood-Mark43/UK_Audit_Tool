@@ -112,7 +112,8 @@ class AuditService {
       LIMIT 50
     `;
 
-    const result = await db.query(query, [`%${searchTerm}%`]);
+    const searchPattern = `%${searchTerm}%`;
+    const result = await db.query(query, [searchPattern, searchPattern, searchPattern, searchPattern, searchPattern]);
     return result.rows;
   }
 
@@ -142,7 +143,7 @@ class AuditService {
         COUNT(DISTINCT rhe.id) as modification_count,
         MAX(ul.usage_log_date_utc) as last_viewed,
         MAX(rhe.timestamp_utc) as last_modified,
-        json_group_array(DISTINCT ul.ip_address) as ip_addresses
+        array_agg(DISTINCT ul.ip_address) FILTER (WHERE ul.ip_address IS NOT NULL) as ip_addresses
       FROM users u
       LEFT JOIN usage_logs ul ON u.user_id = ul.user_id
         AND ul.primary_entity_type = 'REPORT'
