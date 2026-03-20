@@ -223,7 +223,7 @@ CREATE OR REPLACE FUNCTION get_user_activity(
     p_end_date TIMESTAMP
 )
 RETURNS TABLE (
-    timestamp TIMESTAMP,
+    "timestamp" TIMESTAMP,
     activity_type VARCHAR,
     entity_type VARCHAR,
     entity_id BIGINT,
@@ -257,7 +257,7 @@ CREATE OR REPLACE FUNCTION get_report_audit_trail(
     p_report_id BIGINT
 )
 RETURNS TABLE (
-    timestamp TIMESTAMP,
+    "timestamp" TIMESTAMP,
     user_name TEXT,
     badge_number VARCHAR,
     action VARCHAR,
