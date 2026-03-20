@@ -74,13 +74,13 @@ class AuditService {
         u.*,
         COUNT(DISTINCT ul.id) as usage_log_count,
         COUNT(DISTINCT rhe.id) as modification_count,
-        MAX(CASE WHEN ul.usage_log_date_utc > rhe.timestamp_utc THEN ul.usage_log_date_utc ELSE rhe.timestamp_utc END) as last_activity
+        GREATEST(MAX(ul.usage_log_date_utc), MAX(rhe.timestamp_utc)) as last_activity
       FROM users u
       LEFT JOIN usage_logs ul ON u.user_id = ul.user_id
       LEFT JOIN report_history_events rhe ON u.user_id = rhe.changed_by
       WHERE u.is_active = true
       GROUP BY u.user_id
-      ORDER BY last_activity DESC
+      ORDER BY last_activity DESC NULLS LAST
     `;
 
     const result = await db.query(query);
@@ -157,7 +157,7 @@ class AuditService {
       WHERE u.user_id = ?
         AND (ul.primary_entity_id IS NOT NULL OR rhe.primary_id IS NOT NULL)
       GROUP BY report_id, report_title
-      ORDER BY MAX(CASE WHEN ul.usage_log_date_utc > rhe.timestamp_utc THEN ul.usage_log_date_utc ELSE rhe.timestamp_utc END) DESC
+      ORDER BY GREATEST(MAX(ul.usage_log_date_utc), MAX(rhe.timestamp_utc)) DESC NULLS LAST
     `;
 
     const result = await db.query(query, [startDate, startDate, endDate, endDate, startDate, startDate, endDate, endDate, userId]);
@@ -228,7 +228,7 @@ class AuditService {
         COALESCE(ul.primary_entity_title, rhe.primary_name) as report_title,
         COUNT(DISTINCT ul.id) as view_count,
         COUNT(DISTINCT rhe.id) as modification_count,
-        MAX(CASE WHEN ul.usage_log_date_utc > rhe.timestamp_utc THEN ul.usage_log_date_utc ELSE rhe.timestamp_utc END) as last_activity
+        GREATEST(MAX(ul.usage_log_date_utc), MAX(rhe.timestamp_utc)) as last_activity
       FROM (
         SELECT DISTINCT primary_entity_id, primary_entity_title FROM usage_logs WHERE primary_entity_type = 'REPORT' AND primary_entity_id > 0 AND primary_entity_title LIKE ?
         UNION
