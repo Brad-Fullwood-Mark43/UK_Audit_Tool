@@ -24,6 +24,16 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_badge ON users(badge_number);
 CREATE INDEX idx_users_dept ON users(department_id);
 
+-- Report metadata (report type information)
+CREATE TABLE IF NOT EXISTS report_metadata (
+    report_id BIGINT PRIMARY KEY,
+    report_type VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_report_metadata_type ON report_metadata(report_type);
+
 -- ============================================================================
 -- USAGE LOGS
 -- ============================================================================
@@ -302,6 +312,7 @@ $$ LANGUAGE plpgsql;
 -- ============================================================================
 
 COMMENT ON TABLE users IS 'User profiles extracted from RMS usage logs and history events';
+COMMENT ON TABLE report_metadata IS 'Report type classification and metadata';
 COMMENT ON TABLE usage_logs IS 'System-wide user activity logs (views, logins, navigation)';
 COMMENT ON TABLE report_history_events IS 'Report and entity modification history';
 COMMENT ON TABLE history_change_sets IS 'Field-level changes associated with history events';
